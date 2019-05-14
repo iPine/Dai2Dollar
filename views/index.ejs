@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>dai2usd</title>
+  <!-- 引入 echarts.js -->
+  <script src="/lib/echarts.min.js"></script>
+  <script src="/lib/jquery-3.1.1.min.js"></script>
+</head>
+
+<body>
+
+  <div id= "radioBox" style="width: 88vw;height:9vh;">
+      <p>选择时间片：</p>
+      <input type="radio" name="period" value="week" checked onclick="readRadio()"/> 一星期
+      <input type="radio" name="period" value="month" onclick="readRadio()"/> 一个月
+  </div>
+    
+  <!-- 准备一个具备大小（宽高）的Dom -->
+  <div id="main" style="width: 88vw;height:82vh;">
+  </div>
+
+  <script type="text/javascript">
+
+    // 默认展示一个月
+    render('/data/dai2usd-7.json')
+
+    function readRadio(){
+      var period = $('#radioBox input[name = "period"]:checked ').val()
+      var filepath = ''
+      // console.log(period)
+      if(period == 'week'){
+        filepath = '/data/dai2usd-7.json'
+      }else{
+        filepath = '/data/dai2usd-30.json'
+      }
+      render(filepath)
+    }
+    
+    // 绘图函数
+    function render(path){
+      $.get(path).done(function (data) {
+
+        var data = splitData(data)
+        // console.log(data.minY)
+
+        // 获取唯一的交易所类别
+        var categories = []
+        for (var i = 0; i < data.pointData.length; i++) {
+          categories.push(data.pointData[i][3])
+        }
+        var uniqueCate = categories.filter(function (ele, index, self) {
+          return self.indexOf(ele) === index;
+        })
+        // console.log(uniqueCate)
+
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // 显示标题，图例和坐标轴
+        var option = {
+          title: {
+            text: 'DAI-USD price based on time',
+            left: 'center',
+            top: 5
+          },
+          // 交易所颜色映射
+          visualMap: [{
+            show: true,
+            // 传入category类型数据
+            type: 'piecewise',
+            // 维度表示取数据的第几列值
+            dimension: 3,
+            categories: uniqueCate,
+            align: 'left',
+            textGap: 10,
+            left: 'center',
+            orient: 'horizontal',
+            top: 30,
+            // bottom: 20,
+            // right: '-6%',
+
+            inRange: {
+              symbol: 'circle',
+              // symbolSize: 5,
+              color: ['#f2c31a', '#24b7f2', '#d94e5d', '##B0C4DE', '#50a3ba', '#66CDAA',
+                '#BDB76B', '#8B658B'
+              ],
+              opacity: 1,
+            }
+
+          }],
+          // 鼠标悬浮显示信息
+          tooltip: {
+            // trigger: 'item',
+            formatter: function (params) {
+              return 'Price: ' + params.value[1] + '<br/>' +
+                'Amount: ' + params.value[2] + '<br/>' +
+                'Exchange: ' + params.value[3];
+            },
+            axisPointer: {
+              show: true,
+              type: 'cross',
+              lineStyle: {
+                type: 'dashed',
+                width: 1
+              }
+            },
+            backgroundColor: 'rgba(000, 000, 000, 0.8)',
+            borderWidth: 1,
+            borderColor: '#ccc',
+            padding: 10,
+            textStyle: {
+              color: '#fff'
+            },
+
+          },
+          // 右上角的选择工具
+          toolbox: {
+            feature: {
+              dataZoom: {},
+              brush: {
+                type: ['rect', 'polygon', 'clear']
+              }
+            }
+          },
+
+          legend: {
+            data: uniqueCate,
+            left: 'center'
+          },
+          // x轴设置
+          xAxis: {
+            type: 'time',
+            name: 'Time',
+            nameLocation: 'end',
+            nameTextStyle: {
+              fontSize: 14,
+              fontWeight: 'bold',
+              fontFamily: 'Microsoft YaHei'
+            },
+            nameGap: 20,
+            splitNumber: 6,
+            // minInterval: 1,
+            maxInterval: 3600 * 24 * 1000 * 7,
+          },
+          // y轴设置
+          yAxis: {
+            type: 'value',
+            name: 'Price',
+            nameLocation: 'end',
+            nameTextStyle: {
+              fontSize: 14,
+              fontWeight: 'bold',
+              fontFamily: 'Microsoft YaHei'
+            },
+            nameGap: 10,
+            min: data.minY - 0.02,
+            max: data.maxY + 0.02,
+            // scale:true,
+            boundaryGap: [0, '100%']
+
+          },
+          // 下方的缩放功能
+          dataZoom: [{
+            type: 'inside',
+            start: 0,
+            end: 100
+          }, {
+            start: 0,
+            end: 100,
+            handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            handleSize: '80%',
+            handleStyle: {
+              color: '#fff',
+              shadowBlur: 3,
+              shadowColor: 'rgba(0, 0, 0, 0.6)',
+              shadowOffsetX: 2,
+              shadowOffsetY: 2
+            },
+            left: 'center',
+            top: 'bottom',
+          }],
+          // 传数据
+          series: [{
+            type: 'scatter',
+            data: data.pointData,
+            // encode:{
+            //   value: 2
+            // },
+            symbolSize: function(val){
+              minSize = 4
+              base = 10
+            return minSize + (val[2] - data.minAmount)/(data.maxAmount - data.minAmount)*base;
+            },
+            itemStyle: {
+              normal:{
+                opacity: 0.7,
+              }
+            },
+          }]
+        };
+
+      myChart.setOption(option);
+      });
+
+    }
+
+    // 处理原始数据函数
+    function splitData(rawData) {
+      var pointData = new Array()
+      var maxY = -1
+      var minY = 999
+      var maxAmount = 0
+      var minAmount = 99999
+
+      for (var i = 0; i < rawData.length; i++) {
+
+        var myTime = new Date(parseInt(rawData[i].timestamp) * 1000)
+        var myPrice = parseFloat(parseFloat(rawData[i]['price']).toFixed(2))
+        var myAmount = parseFloat(parseFloat(rawData[i]['amount']).toFixed(2))
+        var myCateg = toUp(rawData[i]['exchange'])
+
+        if (myPrice && myPrice < minY) {
+          // 过滤掉数据中的异常小值0.39和0.43
+          if (myPrice > 0.5) {
+            minY = myPrice
+          }
+
+        }
+        if (myPrice && myPrice > maxY) {
+          // 过滤掉数据中的异常大值
+          if (myPrice < 5) {
+            maxY = myPrice
+          }
+        }
+        if(myAmount && myAmount < minAmount){
+          minAmount = myAmount
+        }
+        if(myAmount && myAmount > maxAmount){
+          maxAmount = myAmount
+        }
+        var point = new Array()
+        point.push(myTime)
+        point.push(myPrice)
+        point.push(myAmount)
+        point.push(myCateg)
+
+        pointData.push(point)
+
+        minY = parseFloat(minY.toFixed(2))
+        maxY = parseFloat(maxY.toFixed(2))
+      }
+      // console.log(maxY)
+      // console.log(minY)
+      return {
+        pointData: pointData,
+        minY: minY,
+        maxY: maxY,
+        minAmount: minAmount,
+        maxAmount: maxAmount,
+      }
+
+    }
+
+    //将字符的首字母大写
+    function toUp(x) {
+      if (!x) {
+        return ''
+      }
+      var x1 = x.substr(0, 1).toUpperCase(); // 截取第一个字符并将其转换成大写字母
+      var x2 = x.substr(1); // 取到从第二个开始到最后的字符串
+      x = x1 + x2;
+      return x;
+    }
+
+    // 时间格式转换函数
+    function unifyTime(seconds) {
+      Date.prototype.toLocaleString = function () {
+        var month = this.getMonth() + 1;
+        month = month < 10 ? '0' + month : '' + month;
+        var seconds = this.getSeconds();
+        var minutes = this.getMinutes();
+        seconds = seconds < 10 ? '0' + seconds : '' + seconds;
+        minutes = minutes < 10 ? '0' + minutes : '' + minutes;
+        return this.getFullYear() + "-" + month + "-" + this.getDate() + " " + this.getHours() + ":" +
+          minutes + ":" + seconds;
+      };
+      var unixTimestamp = new Date(seconds * 1000);
+      var commonTime = unixTimestamp.toLocaleString();
+      return commonTime;
+    }
+  </script>
+</body>
+
+</html>
