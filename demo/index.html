@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <title>dai2usd</title>
   <!-- 引入 echarts.js -->
-  <script src="/lib/echarts.min.js"></script>
-  <script src="/lib/jquery-3.1.1.min.js"></script>
+  <script src="lib/echarts.min.js"></script>
+  <script src="lib/jquery-3.1.1.min.js"></script>
 </head>
 
 <body>
@@ -24,16 +24,16 @@
   <script type="text/javascript">
 
     // 默认展示一个月
-    render('/data/dai2usd-7.json')
+    render('data/dai2usd-7.json')
 
     function readRadio(){
       var period = $('#radioBox input[name = "period"]:checked ').val()
       var filepath = ''
       // console.log(period)
       if(period == 'week'){
-        filepath = '/data/dai2usd-7.json'
+        filepath = 'data/dai2usd-7.json'
       }else{
-        filepath = '/data/dai2usd-30.json'
+        filepath = 'data/dai2usd-30.json'
       }
       render(filepath)
     }
