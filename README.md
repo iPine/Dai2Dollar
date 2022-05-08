@@ -14,5 +14,5 @@ Dai​ 是价格锚定 1 美元左右的加密货币 (`1 Dai ~= 1 USD`)。`ETH` 
 - 执行: `npm start`(默认执行端口 3000)
 - 查看效果: http://localhost:3000/
 
-## [这里是Demo](http://ipine.me/Dai2Dollar/demo/index.html)
+## [这里是Demo](http://ipine.cc/Dai2Dollar/demo/index.html)
 可视化效果的静态页面展示，无实时数据。
